@@ -4,25 +4,28 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import portfolio.loginandregisterservice.model.records.UserRequestRecord;
+import portfolio.loginandregisterservice.model.service.EmailService;
 import portfolio.loginandregisterservice.model.service.UserService;
 
 @RestController
-@RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
+    private final EmailService emailService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, EmailService emailService) {
         this.userService = userService;
+        this.emailService = emailService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> create(@Valid UserRequestRecord data) {
+    @PostMapping("/register")
+    public ResponseEntity<?> create(@Valid @RequestBody UserRequestRecord data) {
         if (data == null || data.name() == null || data.name().isBlank()
                 || data.email() == null || data.email().isBlank()
                 || data.password() == null || data.password().isBlank()) {
             return ResponseEntity.badRequest().body("Name, email and password must be provided.");
         }
+        emailService.registeredMail(data.email(), data.name());
         return ResponseEntity.ok(userService.create(data));
     }
 
@@ -56,7 +59,7 @@ public class UserController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> update(@Valid UserRequestRecord data) {
+    public ResponseEntity<?> update(@Valid @RequestBody UserRequestRecord data) {
         if (data == null || data.id() == null || data.id() <= 0) {
             return ResponseEntity.badRequest().body("Invalid id!");
         }
