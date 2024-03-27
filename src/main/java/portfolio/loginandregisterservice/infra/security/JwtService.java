@@ -1,4 +1,4 @@
-package portfolio.loginandregisterservice.model.service;
+package portfolio.loginandregisterservice.infra.security;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,13 +12,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
-    private  final JwtEncoder encoder;
 
-    public JwtService(JwtEncoder encoder) {
-        this.encoder = encoder;
+    private final JwtEncoder jwtEncoder;
+
+    public JwtService(JwtEncoder jwtEncoder) {
+        this.jwtEncoder = jwtEncoder;
     }
 
-    public String generateToken(Authentication authentication){
+    public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
         long expiry = 3600L;
 
@@ -33,6 +34,7 @@ public class JwtService {
                 .subject(authentication.getName())
                 .claim("scope",scopes)
                 .build();
-        return encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 }

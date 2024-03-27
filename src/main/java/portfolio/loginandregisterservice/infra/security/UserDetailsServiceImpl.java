@@ -1,10 +1,9 @@
-package portfolio.loginandregisterservice.model.service;
+package portfolio.loginandregisterservice.infra.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import portfolio.loginandregisterservice.authentication.UserAuthenticated;
 import portfolio.loginandregisterservice.model.repository.UserRepository;
 
 @Service
@@ -18,7 +17,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByName(username)
+        return userRepository.findByEmail(username)
                 .map(UserAuthenticated::new)
                 .orElseThrow(()-> new UsernameNotFoundException("User not found"));
     }

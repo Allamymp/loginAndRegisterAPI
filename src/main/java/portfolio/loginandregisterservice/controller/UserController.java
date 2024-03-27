@@ -37,16 +37,16 @@ public class UserController {
         return ResponseEntity.ok().body(userService.findById(id));
     }
 
-    @GetMapping("/{email}")
-    public ResponseEntity<?> findByEmail(@Valid @PathVariable String email) {
+    @GetMapping("/email")
+    public ResponseEntity<?> findByEmail(@Valid @RequestParam String email) {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body("A valid email must be provided.");
         }
         return ResponseEntity.ok().body(userService.findByEmail(email));
     }
 
-    @GetMapping("/{name}")
-    public ResponseEntity<?> findByName(@Valid @PathVariable String name) {
+    @GetMapping("/name")
+    public ResponseEntity<?> findByName(@Valid @RequestParam String name) {
         if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest().body("A valid name must be provided.");
         }

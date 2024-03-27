@@ -1,4 +1,4 @@
-package portfolio.loginandregisterservice.model.service;
+package portfolio.loginandregisterservice.infra.security;
 
 
 import org.springframework.security.core.Authentication;
@@ -13,7 +13,7 @@ public class AuthenticationService {
         this.jwtService = jwtService;
     }
 
-    public String authenticate(Authentication authentication){
+    public String authenticate(Authentication authentication) {
         return jwtService.generateToken(authentication);
     }
 }

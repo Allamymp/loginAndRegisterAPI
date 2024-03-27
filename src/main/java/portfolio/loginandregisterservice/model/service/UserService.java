@@ -1,6 +1,7 @@
 package portfolio.loginandregisterservice.model.service;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionSystemException;
 import portfolio.loginandregisterservice.model.entities.User;
@@ -17,15 +18,17 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
 
     public String create(UserRequestRecord data) {
         try {
-            userRepository.save(new User(data.name(), data.email(), data.password()));
+            userRepository.save(new User(data.name(), data.email(), passwordEncoder.encode(data.password())));
             return "User created successfully.";
         } catch (DataIntegrityViolationException e) {
             return "Email already exists.";
@@ -71,7 +74,7 @@ public class UserService {
             }
 
             if (!Objects.equals(user.getPassword(), data.password()) && !data.password().isBlank()) {
-                user.setPassword(data.password());
+                user.setPassword(passwordEncoder.encode(data.password()));
             }
             userRepository.save(user);
             return "User updated successfully!";

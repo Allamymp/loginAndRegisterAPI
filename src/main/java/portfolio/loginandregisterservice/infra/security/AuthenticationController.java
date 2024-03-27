@@ -1,13 +1,11 @@
-package portfolio.loginandregisterservice.controller;
+package portfolio.loginandregisterservice.infra.security;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-import portfolio.loginandregisterservice.model.service.AuthenticationService;
 
 @RestController
 public class AuthenticationController {
-
     private final AuthenticationService authenticationService;
 
     public AuthenticationController(AuthenticationService authenticationService) {
@@ -15,7 +13,12 @@ public class AuthenticationController {
     }
 
     @PostMapping("/authenticate")
-    public String authenticate(Authentication authentication){
-        return authenticationService.authenticate(authentication);
+    public String authenticate(Authentication authentication) {
+        try {
+            return authenticationService.authenticate(authentication);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }
