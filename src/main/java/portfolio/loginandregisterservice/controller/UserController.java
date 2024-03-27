@@ -37,7 +37,7 @@ public class UserController {
         return ResponseEntity.ok().body(userService.findById(id));
     }
 
-    @GetMapping("/email")
+    @GetMapping("/findByEmail")
     public ResponseEntity<?> findByEmail(@Valid @RequestParam String email) {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body("A valid email must be provided.");
@@ -45,7 +45,7 @@ public class UserController {
         return ResponseEntity.ok().body(userService.findByEmail(email));
     }
 
-    @GetMapping("/name")
+    @GetMapping("/findByName")
     public ResponseEntity<?> findByName(@Valid @RequestParam String name) {
         if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest().body("A valid name must be provided.");
