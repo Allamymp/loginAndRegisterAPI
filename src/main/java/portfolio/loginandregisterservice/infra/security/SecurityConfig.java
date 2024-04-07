@@ -40,6 +40,9 @@ public class SecurityConfig {
                         auth -> auth
                                 .requestMatchers("/authenticate").permitAll()
                                 .requestMatchers("/register").permitAll()
+                                .requestMatchers("/activate/**").permitAll()
+                                .requestMatchers("/forgetPassword/**").permitAll()
+                                .requestMatchers("/reset/**").permitAll()
                                 .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .oauth2ResourceServer(

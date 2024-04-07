@@ -1,18 +1,18 @@
 package portfolio.loginandregisterservice.model.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.TransactionSystemException;
 import portfolio.loginandregisterservice.model.entities.User;
-import portfolio.loginandregisterservice.model.records.UserRequestRecord;
-import portfolio.loginandregisterservice.model.records.UserResponseRecord;
 import portfolio.loginandregisterservice.model.repository.UserRepository;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -20,68 +20,112 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
 
-    public String create(UserRequestRecord data) {
-        try {
-            userRepository.save(new User(data.name(), data.email(), passwordEncoder.encode(data.password())));
-            return "User created successfully.";
-        } catch (DataIntegrityViolationException e) {
-            return "Email already exists.";
-        } catch (TransactionSystemException e) {
-            return "Failed to create user due to transaction issue.";
-        } catch (Exception e) {
-            return "An unexpected error occurred.";
+    public User create(User user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new DataIntegrityViolationException("Email already exists.");
         }
+        if (!validatePassword(user.getPassword())) {
+            throw new IllegalArgumentException("A valid password must provide at least one uppercase"
+                    + " letter, one lowercase letter, one special character, one number "
+                    + "and be between 8 and 20 characters in length.");
+        }
+        String activationToken = UUID.randomUUID().toString();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setUniqueToken(activationToken);
+        return userRepository.save(user);
     }
 
-    public Optional<UserResponseRecord> findById(Long id) {
-        return userRepository.findById(id)
-                .map(user -> new UserResponseRecord(user.getId(), user.getName(), user.getEmail(), user.getPassword()));
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+
     }
 
-    public Optional<UserResponseRecord> findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .map(user -> new UserResponseRecord(user.getId(), user.getName(), user.getEmail(), user.getPassword()));
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
-    public List<UserResponseRecord> findByName(String name) {
-        return userRepository.findAllByName(name)
-                .stream()
-                .map(user -> new UserResponseRecord(user.getId(), user.getName(), user.getEmail(), user.getPassword()))
-                .collect(Collectors.toList());
+    public List<User> findAll() {
+        return userRepository.findAll();
     }
 
-    public List<UserResponseRecord> findAll() {
-        return userRepository.findAll().stream()
-                .map(user -> new UserResponseRecord(user.getId(), user.getName(), user.getEmail(), user.getPassword()))
-                .collect(Collectors.toList());
-    }
-
-    public String update(UserRequestRecord data) {
-        Optional<User> userOptional = userRepository.findById(data.id());
+    public User update(User data) {
+        Optional<User> userOptional = userRepository.findById(data.getId());
         return userOptional.map(user -> {
-            if (!Objects.equals(user.getName(), data.name()) && !data.name().isBlank()) {
-                user.setName(data.name());
+            if (!Objects.equals(user.getName(), data.getName()) && !data.getName().isBlank()) {
+                user.setName(data.getName());
             }
 
-            if (!Objects.equals(user.getEmail(), data.email()) && !data.email().isBlank()) {
-                user.setEmail(data.email());
+            if (!Objects.equals(user.getEmail(), data.getEmail()) && !data.getEmail().isBlank()) {
+                user.setEmail(data.getEmail());
             }
 
-            if (!Objects.equals(user.getPassword(), data.password()) && !data.password().isBlank()) {
-                user.setPassword(passwordEncoder.encode(data.password()));
+            if (!data.getPassword().isBlank()
+                    && !passwordEncoder.matches(data.getPassword(), user.getPassword())
+                    && validatePassword(data.getPassword())) {
+                user.setPassword(passwordEncoder.encode(data.getPassword()));
             }
-            userRepository.save(user);
-            return "User updated successfully!";
-        }).orElse("User not found for id " + data.id());
+
+            return userRepository.save(user);
+        }).orElseThrow(EntityNotFoundException::new);
     }
 
-    public void deleteById(UserRequestRecord data) {
-        userRepository.deleteById(data.id());
+    public void deleteById(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    public String[] forgetPassword(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        return userOptional.map(user -> new String[]{user.getEmail(), user.getUniqueToken()}).orElse(null);
+    }
+
+    public String[] resetPassword(String token) {
+        Optional<User> userOptional = userRepository.findByUniqueToken(token);
+        if (userOptional.isPresent()) {
+            String newPassword = generateRandomPassword(8);
+            User user = userOptional.get();
+            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setUniqueToken(UUID.randomUUID().toString());
+            userRepository.save(user);
+            return new String[]{user.getEmail(), newPassword};
+        }
+        return null;
+    }
+
+
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder newPassword = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int randomIndex = (int) (Math.random() * chars.length());
+            newPassword.append(chars.charAt(randomIndex));
+        }
+        return newPassword.toString();
+    }
+
+    private boolean validatePassword(String password) {
+        if (password.length() < 8 || password.length() > 20) {
+            return false;
+        }
+        // Verifica se a senha contém pelo menos uma letra maiúscula, uma minúscula e um
+        // caractere especial
+        Pattern upperCase = Pattern.compile("[A-Z]");
+        Pattern lowerCase = Pattern.compile("[a-z]");
+        Pattern specialChar = Pattern.compile("[!@#$%^&*()-_+=<>?/{}\\[\\]]");
+        Pattern numChar = Pattern.compile("[0-9]");
+
+        Matcher upperCaseMatcher = upperCase.matcher(password);
+        Matcher lowerCaseMatcher = lowerCase.matcher(password);
+        Matcher specialCharMatcher = specialChar.matcher(password);
+        Matcher numCharMatcher = numChar.matcher(password);
+
+        return upperCaseMatcher.find() && lowerCaseMatcher.find()
+                && specialCharMatcher.find() && numCharMatcher.find();
     }
 }

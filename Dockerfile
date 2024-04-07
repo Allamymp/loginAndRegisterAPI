@@ -11,5 +11,5 @@ RUN mvn clean install -DskipTests
 # Second step: Creating the minimal image
 FROM openjdk:21-jdk-slim
 EXPOSE 8080
-COPY --from=build /target/springSecurityJwt-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /target/loginAndRegisterService-0.0.1-SNAPSHOT.jar app.jar
 CMD ["sh", "-c", "java -jar app.jar"]
