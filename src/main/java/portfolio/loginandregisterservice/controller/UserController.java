@@ -11,6 +11,7 @@ import portfolio.loginandregisterservice.model.records.UserResponseRecord;
 import portfolio.loginandregisterservice.model.service.EmailService;
 import portfolio.loginandregisterservice.model.service.UserService;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -39,29 +40,48 @@ public class UserController {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("A valid id must be provided.");
         }
-        return ResponseEntity.ok().body(
-                userService.findById(id)
-                        .map(user -> new UserResponseRecord(
-                                user.getId()
-                                , user.getName()
-                                , user.getEmail()
-                                , user.getPassword()
-                                , user.getUniqueToken())));
+
+        Optional<User> userOptional = userService.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            UserResponseRecord userResponseRecord = new UserResponseRecord(
+                    user.getId(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getPassword(),
+                    user.getUniqueToken()
+            );
+            return ResponseEntity.ok().body(userResponseRecord);
+        } else {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("User not found for id: " + id);
+        }
     }
+
 
     @GetMapping("/findByEmail")
     public ResponseEntity<?> findByEmail(@RequestParam String email) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("A valid email must be provided.");
         }
-        return ResponseEntity.ok().body(userService.findByEmail(email)
-                .map(user -> new UserResponseRecord(
-                        user.getId()
-                        , user.getName()
-                        , user.getEmail()
-                        , user.getPassword()
-                        , user.getUniqueToken()))
-        );
+
+        Optional<User> userOptional = userService.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            UserResponseRecord userResponseRecord = new UserResponseRecord(
+                    user.getId(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getPassword(),
+                    user.getUniqueToken()
+            );
+            return ResponseEntity.ok().body(userResponseRecord);
+        } else {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("User not found for email: " + email);
+        }
     }
 
     @GetMapping("/all")

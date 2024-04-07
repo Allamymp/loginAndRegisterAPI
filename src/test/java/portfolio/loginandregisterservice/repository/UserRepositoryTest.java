@@ -61,7 +61,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void getUser_withExistingId_returnsUser() {
+    public void getUser_byExistingId_returnsUser() {
 
         User user = testEntityManager.persistFlushFind(USER);
         Optional<User> sud = userRepository.findById(user.getId());
@@ -70,4 +70,36 @@ public class UserRepositoryTest {
         assertThat(sud).isNotEmpty();
         assertThat(user.getId()).isEqualTo(sud.get().getId());
     }
+    @Test
+    public void getUser_byUnexistingId_returnsUser(){
+
+        Optional<User> sud = userRepository.findById(1L);
+        assertThat(sud).isEmpty();
+    }
+
+    @Test
+    public void getUser_ByExistingEmail_returnsUser() throws Exception {
+        User user = testEntityManager.persistFlushFind(USER);
+        Optional<User> sud = userRepository.findByEmail(user.getEmail());
+        assertThat(sud).isNotEmpty();
+    }
+
+    @Test
+    public void getUser_ByUnexistingEmail_returnsEmpty() throws Exception {
+        Optional<User> sud = userRepository.findByEmail(USER.getName());
+        assertThat(sud).isEmpty();
+    }
+
+    @Test
+    public void getUser_byExistingUniqueToken_returnsUser(){
+        User user = testEntityManager.persistFlushFind(USER);
+        Optional<User> sud = userRepository.findByUniqueToken(user.getUniqueToken());
+        assertThat(sud).isNotEmpty();
+    }
+    @Test
+    public void getUser_byUnexistingUniqueToken_returnsEmpty(){
+        Optional<User> sud = userRepository.findByUniqueToken(USER.getUniqueToken());
+        assertThat(sud).isEmpty();
+    }
+
 }
