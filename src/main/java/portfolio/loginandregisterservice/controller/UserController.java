@@ -124,13 +124,8 @@ public class UserController {
 
     @GetMapping("/forgetPassword")
     public ResponseEntity<?> forgetPassword(@RequestParam String email) {
-        String[] data = userService.forgetPassword(email);
-        if (data != null) {
-            emailService.sendResetPasswordEmailAuth(data[0], data[1]);
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        userService.forgetPassword(email);
+        return ResponseEntity.ok().body("Password instructions sent to your email.");
     }
 
     @DeleteMapping("/delete")
@@ -141,4 +136,6 @@ public class UserController {
         userService.deleteById(data.id());
         return ResponseEntity.noContent().build();
     }
+
+
 }

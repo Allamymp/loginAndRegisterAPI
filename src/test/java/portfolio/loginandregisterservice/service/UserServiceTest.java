@@ -5,11 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import portfolio.loginandregisterservice.model.entities.User;
 import portfolio.loginandregisterservice.model.repository.UserRepository;
+import portfolio.loginandregisterservice.model.service.EmailService;
 import portfolio.loginandregisterservice.model.service.UserService;
 
 import java.util.List;
@@ -26,6 +28,8 @@ class UserServiceTest {
     private UserService userService;
     @Mock
     PasswordEncoder passwordEncoder;
+    @Mock
+    EmailService emailService;
 
     @Mock
     private UserRepository userRepository;
@@ -129,17 +133,14 @@ class UserServiceTest {
         assertThatCode(() -> userService.deleteById(1L)).doesNotThrowAnyException();
     }
 
-    @Test
-    void forgetPassword_withExistingEmail_returnStringArray() {
-        when(userRepository.findByEmail(USER.getEmail())).thenReturn(Optional.of(USER));
+        @Test
+        void forgetPassword_withExistingEmail_returnStringArray() {
+            when(userRepository.findByEmail(USER.getEmail())).thenReturn(Optional.of(USER));
 
-        String[] sud = userService.forgetPassword(USER.getEmail());
+            userService.forgetPassword(USER.getEmail());
 
-        assertThat(sud[0]).isNotBlank();
-        assertThat(sud[0]).isEqualTo(USER.getEmail());
-        assertThat(sud[1]).isNotBlank();
-        assertThat(sud[1]).isEqualTo(USER.getUniqueToken());
-    }
+            Mockito.verify(emailService).sendResetPasswordEmailAuth(USER.getEmail(), USER.getUniqueToken());
+        }
 
     @Test
     void resetPassword_withExistingEmail_returnsStringArray() {

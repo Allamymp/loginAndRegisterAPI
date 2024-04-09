@@ -19,11 +19,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
 
@@ -80,9 +82,14 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public String[] forgetPassword(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        return userOptional.map(user -> new String[]{user.getEmail(), user.getUniqueToken()}).orElse(null);
+    public void forgetPassword(String email) {
+        userRepository.findByEmail(email)
+                .ifPresentOrElse(
+                        user -> emailService.sendResetPasswordEmailAuth(user.getEmail(), user.getUniqueToken()),
+                        () -> {
+                            throw new IllegalArgumentException("User not found for email: " + email);
+                        }
+                );
     }
 
     public String[] resetPassword(String token) {
